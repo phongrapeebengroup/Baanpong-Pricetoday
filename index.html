@@ -1,330 +1,282 @@
-import React, { useState, useEffect } from 'react';
-import { Phone, MessageCircle, Facebook, Calendar, AlertTriangle, X, User } from 'lucide-react';
-
-// *** นำ LIFF ID ของคุณมาใส่ตรงนี้ ***
-const LIFF_ID = '2008569921-6bwdPg7X'; 
-
-const InitialData = {
-  aluminum: [
-    { name: "กระป๋องอลูมิเนียม", priceStore: 50, priceStorage: 45 },
-    { name: "ฉากสะอาด", priceStore: 50, priceStorage: 40 },
-    { name: "ฉากรวม", priceStore: 45, priceStorage: 35 },
-    { name: "หนารวม", priceStore: 40, priceStorage: 37 },
-    { name: "บางรวม", priceStore: 37, priceStorage: 35 },
-    { name: "แผ่นเพลท", priceStore: 55, priceStorage: 40 },
-    { name: "กระทะดำ/ผัด", priceStore: 30, priceStorage: 20 },
-    { name: "ล้อแมกซ์(แกะสะอาด)", priceStore: 50, priceStorage: 45 },
-    { name: "ล้อแมกซ์(โครเมี่ยม)", priceStore: 45, priceStorage: 40 },
-    { name: "สายไฟ(ปอกเปลือกสวย)", priceStore: 45, priceStorage: 40 },
-  ],
-  plastic: [
-    { name: "PET รวม (ไม่แกะฉลาก)", priceStore: 6, priceStorage: 5 },
-    { name: "PET ใส (แกะฉลาก)", priceStore: 7, priceStorage: 6 },
-    { name: "PET ฟ้า (แกะฉลาก)", priceStore: 6, priceStorage: 5 },
-    { name: "HDPE (2) / ใส", priceStore: 4, priceStorage: 3 },
-    { name: "HDPE (2) รวม", priceStore: 4, priceStorage: 3 },
-    { name: "สกรีน PP (5)", priceStore: 2, priceStorage: 1 },
-    { name: "ขวดสกรีน", priceStore: 1, priceStorage: 0.5 },
-    { name: "ขวดน้ำมันพืช", priceStore: 1, priceStorage: 0.5 },
-  ],
-  paper: [
-    { name: "กระดาษลัง(ติดสี-1)", priceStore: 3, priceStorage: 2.5 },
-    { name: "กระดาษจับจั๊ว", priceStore: 1, priceStorage: 0.5 },
-    { name: "กระดาษขาวดำ", priceStore: 5, priceStorage: 4.5 },
-  ],
-  oil: [
-    { name: "น้ำมันพืชเก่าใช้แล้ว", priceStore: 20, priceStorage: 15 },
-  ],
-  glass: [
-    { name: "เศษแก้วรวม", priceStore: 1, priceStorage: 0.5 },
-    { name: "เศษแก้วสีขาว", priceStore: 1, priceStorage: 0.5 },
-    { name: "เศษแก้วสีชา", priceStore: 1, priceStorage: 0.5 },
-    { name: "เศษแก้วสีเขียว", priceStore: 1, priceStorage: 0.5 },
-  ],
-  bottles: [
-    { name: "สิงห์ ใหญ่ 620 ml.", priceStore: 7, priceStorage: 6 },
-    { name: "สิงห์ เล็ก 320 ml.", priceStore: 7, priceStorage: 6 },
-    { name: "ลีโอ ใหญ่ 620 ml.", priceStore: 7, priceStorage: 6 },
-    { name: "ลีโอ เล็ก 320 ml.", priceStore: 7, priceStorage: 6 },
-    { name: "ช้าง ใหญ่ 620 ml.", priceStore: 11, priceStorage: 10 },
-    { name: "ช้าง เล็ก 320 ml.", priceStore: 12, priceStorage: 11 },
-    { name: "ไฮนาเก้น ใหญ่ 620 ml.", priceStore: 11, priceStorage: 10 },
-    { name: "ไฮนาเก้น เล็ก 330 ml.", priceStore: 12, priceStorage: 11 },
-    { name: "เฟเดอร์บรอย ใหญ่ 640 ml.", priceStore: 12, priceStorage: 10 },
-    { name: "เฟเดอร์บรอย เล็ก 330 ml.", priceStore: 8, priceStorage: 7 },
-    { name: "นิยมไทย ใหญ่ 625 ml.", priceStore: 8, priceStorage: 7 },
-    { name: "นิยมไทย เล็ก 330 ml.", priceStore: 8, priceStorage: 7 },
-    { name: "อาชา ใหญ่ 630 ml.", priceStore: 8, priceStorage: 7 },
-    { name: "เหล้าขาว (รวงข้าว 625 ml.)", priceStore: 11, priceStorage: 10 },
-    { name: "เหล้าขาว (รวงข้าว 330 ml.)", priceStore: 11, priceStorage: 10 },
-    { name: "เหล้าขาว (ขวดเรียบ 625 ml.)", priceStore: 12, priceStorage: 10 },
-  ],
-  promotion: [
-    { name: "กระป๋องอลูมิเนียม 3 ตัน ขึ้นไป (ส่งถึงเรา)", priceStore: 70.5, priceStorage: null },
-  ]
-};
-
-export default function App() {
-  const [prices] = useState(InitialData); // Removed setPrices as we don't edit anymore
-  const [currentDate, setCurrentDate] = useState("");
-  const [liffProfile, setLiffProfile] = useState(null);
-  const [liffError, setLiffError] = useState(null);
-  const [liffReady, setLiffReady] = useState(false);
-
-  useEffect(() => {
-    // Set Date
-    const date = new Date();
-    const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-    setCurrentDate(date.toLocaleDateString('th-TH', options));
-
-    // Dynamic Load LIFF SDK
-    const loadLiff = () => {
-        const script = document.createElement('script');
-        script.src = 'https://static.line-scdn.net/liff/edge/2/sdk.js';
-        script.onload = async () => {
-            try {
-                if (window.liff) {
-                    await window.liff.init({ liffId: LIFF_ID });
-                    setLiffReady(true);
-                    if (window.liff.isLoggedIn()) {
-                        const profile = await window.liff.getProfile();
-                        setLiffProfile(profile);
-                    }
-                }
-            } catch (error) {
-                console.error('LIFF Init Error:', error);
-                setLiffError("ไม่สามารถเชื่อมต่อ LINE ได้ (อาจเกิดจาก LIFF ID ไม่ถูกต้อง หรือไม่ได้เปิดใน LINE)");
-            }
-        };
-        script.onerror = () => {
-             setLiffError("ไม่สามารถโหลด LIFF SDK ได้ กรุณาตรวจสอบอินเทอร์เน็ต");
-        }
-        document.body.appendChild(script);
-    };
-
-    loadLiff();
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ราคารับซื้อ - บ้านป๋องรีไซเคิล</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     
-    // Cleanup
-    return () => {
-        const script = document.querySelector('script[src="https://static.line-scdn.net/liff/edge/2/sdk.js"]');
-        if (script) document.body.removeChild(script);
-    }
-  }, []);
+    <!-- LIFF SDK (Optional inclusions for future expansion) -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-  const handleCloseLiff = () => {
-    if (liffReady && window.liff && window.liff.isInClient()) {
-        window.liff.closeWindow();
-    } else {
-      window.close();
-    }
-  };
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .price-card {
+            transition: all 0.2s;
+        }
+        .category-header {
+            background: linear-gradient(90deg, #166534 0%, #15803d 100%);
+        }
+    </style>
+</head>
+<body class="pb-12">
 
-  const TableHeader = ({ unit }) => (
-    <div className="grid grid-cols-12 gap-2 bg-green-700 text-white p-2 rounded-t-lg text-sm font-bold items-center">
-      <div className="col-span-6 pl-2">รายการสินค้า</div>
-      <div className="col-span-3 text-center">หน้าร้าน ({unit})</div>
-      <div className="col-span-3 text-center">จัดเก็บ ({unit})</div>
-    </div>
-  );
-
-  const ItemRow = ({ item, index, showStorage = true }) => (
-    <div className={`grid grid-cols-12 gap-2 p-2 border-b border-gray-100 text-sm hover:bg-green-50 items-center ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-      <div className="col-span-6 font-medium text-gray-800 pl-2 truncate">{item.name}</div>
-      <div className="col-span-3 text-center font-bold text-green-700">
-        {item.priceStore}
-      </div>
-      <div className="col-span-3 text-center text-gray-600">
-        {showStorage && item.priceStorage}
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-gray-100 p-4 print:p-0 print:bg-white font-sans pb-20">
-      
-      {/* Debug/Error Message for LIFF */}
-      {liffError && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 print:hidden">
-          <strong className="font-bold">LIFF Status: </strong>
-          <span className="block sm:inline">{liffError}</span>
-        </div>
-      )}
-
-      {/* Control Panel */}
-      <div className="max-w-4xl mx-auto mb-4 flex flex-wrap justify-between items-center gap-3 print:hidden">
-        
-        {/* Profile Section */}
-        <div className="flex items-center gap-2">
-           {liffProfile ? (
-             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm">
-               <img src={liffProfile.pictureUrl} alt="Profile" className="w-8 h-8 rounded-full border border-green-500" />
-               <span className="text-sm font-medium text-gray-700">Hi, {liffProfile.displayName}</span>
-             </div>
-           ) : (
-             <div className="flex items-center gap-2 text-gray-500 text-sm">
-               <User size={16}/> {liffReady ? 'Guest Mode (หรือยังไม่ Login)' : 'Loading LINE...'}
-             </div>
-           )}
-        </div>
-
-        {/* Action Buttons - เหลือแค่ปุ่มปิด */}
-        <div className="flex gap-2">
-            <button 
-              onClick={handleCloseLiff}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-200 text-gray-700 rounded shadow hover:bg-gray-300"
-            >
-              <X size={18}/> <span className="hidden sm:inline">ปิด</span>
-            </button>
-        </div>
-      </div>
-
-      {/* Main Paper Sheet */}
-      <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden print:shadow-none print:max-w-none">
-        
-        {/* Header */}
-        <div className="bg-green-600 text-white p-6 text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/recycle.png')]"></div>
-          <h1 className="text-2xl md:text-3xl font-extrabold mb-2 relative z-10">บ้านป๋องรีไซเคิล</h1>
-          <p className="text-lg md:text-xl opacity-90 relative z-10 flex items-center justify-center gap-2">
-            <Calendar size={20}/> ราคารับซื้อสินค้าประจำวัน
-          </p>
-          <div className="mt-2 text-green-100 font-medium relative z-10 bg-green-700/50 inline-block px-4 py-1 rounded-full text-sm md:text-base">
-            {currentDate}
-          </div>
-        </div>
-
-        {/* Contact Bar */}
-        <div className="bg-gray-800 text-white py-3 px-4 flex flex-wrap justify-center gap-4 md:gap-6 text-xs md:text-base print:text-black print:bg-gray-200 print:border-b print:border-gray-400">
-          <div className="flex items-center gap-2">
-            <Phone size={16} className="text-green-400 print:text-black"/> 065-661-9888
-          </div>
-          <div className="flex items-center gap-2">
-            <MessageCircle size={16} className="text-green-400 print:text-black"/> Line: @baanpong
-          </div>
-          <div className="flex items-center gap-2">
-            <Facebook size={16} className="text-green-400 print:text-black"/> BAANPONG
-          </div>
-        </div>
-
-        {/* Content Body */}
-        <div className="p-4 md:p-8 space-y-6">
-
-          {/* Special Promotion */}
-          <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 relative overflow-hidden">
-             <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] md:text-xs font-bold px-3 py-1 rounded-bl-lg">PROMOTION</div>
-             <h3 className="text-lg md:text-xl font-bold text-yellow-800 mb-3 flex items-center gap-2">
-               <AlertTriangle size={24}/> โปรโมชั่นพิเศษ
-             </h3>
-             <div className="flex justify-between items-center border-b border-yellow-200 pb-2">
-                <span className="font-bold text-gray-800 text-base md:text-lg">{prices.promotion[0].name}</span>
-                <div className="text-right">
-                    <span className="text-xs md:text-sm text-gray-500 mr-2">หน้าร้าน</span>
-                    <span className="text-2xl md:text-3xl font-extrabold text-red-600">
-                      {prices.promotion[0].priceStore}
-                    </span>
-                    <span className="text-xs md:text-sm ml-1 text-gray-600">บาท/กก.</span>
+    <!-- Header Section -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="bg-green-600 text-white p-2 rounded-lg">
+                        <i class="fa-solid fa-recycle text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-green-800 leading-tight">บ้านป๋องรีไซเคิล</h1>
+                        <p class="text-xs text-gray-500">ราคารับซื้อสินค้าประจำวัน</p>
+                    </div>
                 </div>
-             </div>
-          </div>
+                <div class="text-right">
+                    <div id="currentDate" class="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                        <!-- Date will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:grid-cols-2">
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 mt-4 space-y-6 max-w-lg">
+
+        <!-- Promotion Banner -->
+        <div class="bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-xl p-4 text-white shadow-lg transform scale-100 hover:scale-[1.01] transition-transform">
+            <div class="flex items-start gap-3">
+                <i class="fa-solid fa-bullhorn text-2xl mt-1 animate-bounce"></i>
+                <div>
+                    <h2 class="font-bold text-lg border-b border-white/30 pb-1 mb-1">โปรโมชั่น พิเศษ!</h2>
+                    <p class="font-medium text-white/90">กระป๋องอลูมิเนียม 3 ตัน ขึ้นไป</p>
+                    <p class="text-sm mt-1 bg-white/20 inline-block px-2 py-0.5 rounded">ส่งถึงเรา หน้าร้าน <span class="font-bold text-xl ml-1">70.5</span> บาท</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Buttons -->
+        <div class="grid grid-cols-3 gap-2">
+            <a href="tel:0656619888" class="flex flex-col items-center justify-center bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg shadow transition">
+                <i class="fa-solid fa-phone mb-1"></i>
+                <span class="text-xs">โทรศัพท์</span>
+            </a>
+            <a href="https://line.me/ti/p/@baanpong" target="_blank" class="flex flex-col items-center justify-center bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg shadow transition">
+                <i class="fa-brands fa-line text-xl mb-1"></i>
+                <span class="text-xs">Line OA</span>
+            </a>
+            <a href="https://www.facebook.com/baanpong888?locale=th_TH" target="_blank" class="flex flex-col items-center justify-center bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-lg shadow transition">
+                <i class="fa-brands fa-facebook text-xl mb-1"></i>
+                <span class="text-xs">Facebook</span>
+            </a>
+        </div>
+
+        <!-- Contact Details Text -->
+        <div class="text-center text-sm text-gray-600 bg-white p-3 rounded-lg shadow-sm">
+            <p><i class="fa-solid fa-phone text-blue-500 mr-2"></i>065-661-9888</p>
+            <p><i class="fa-brands fa-line text-green-500 mr-2"></i>@baanpong</p>
+            <p><i class="fa-brands fa-facebook text-blue-700 mr-2"></i>BAANPONG</p>
+        </div>
+
+        <!-- Price Lists Container -->
+        <div id="priceContainer" class="space-y-5">
+            <!-- JavaScript will render categories here -->
+        </div>
+
+        <!-- Remarks / Footer -->
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg text-xs text-red-700 space-y-2 shadow-sm">
+            <h3 class="font-bold text-red-800 text-sm"><i class="fa-solid fa-circle-exclamation mr-1"></i> หมายเหตุ:</h3>
+            <ul class="list-disc pl-4 space-y-1">
+                <li>ราคาอาจมีการเปลี่ยนแปลงขึ้นลงระหว่างวัน โดยไม่ต้องแจ้งให้ทราบล่วงหน้า โปรดสอบถามราคาก่อนขายสินค้าทุกครั้ง</li>
+                <li>ราคานี้ต้องมีจำนวนกระป๋องอลูมิเนียมขั้นต่ำ 100 กก. ขึ้นไป ถ้าไม่ถึง -5 บาท</li>
+                <li>ร้านเปิดให้บริการวันจันทร์-เสาร์ <strong>หยุดทุกวันอาทิตย์</strong></li>
+            </ul>
+        </div>
+
+        <div class="text-center text-gray-400 text-xs py-4">
+            &copy; <span id="year"></span> บ้านป๋องรีไซเคิล
+        </div>
+
+    </main>
+
+    <script>
+        // --- 1. Date Configuration ---
+        const setDate = () => {
+            const dateElement = document.getElementById('currentDate');
+            const yearElement = document.getElementById('year');
+            const now = new Date();
             
-            {/* Column 1 */}
-            <div className="space-y-6">
-              {/* Aluminum */}
-              <div>
-                <h3 className="text-base md:text-lg font-bold text-green-800 mb-2 border-l-4 border-green-600 pl-2">หมวดอลูมิเนียม</h3>
-                <TableHeader unit="บาท/กก." />
-                <div className="border border-t-0 rounded-b-lg overflow-hidden">
-                  {prices.aluminum.map((item, idx) => (
-                    <ItemRow key={idx} item={item} index={idx} />
-                  ))}
-                </div>
-              </div>
+            // Format Thai Date
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            const thaiDate = now.toLocaleDateString('th-TH', options);
+            
+            dateElement.innerHTML = `<i class="fa-regular fa-calendar mr-1"></i> ${thaiDate}`;
+            yearElement.textContent = now.getFullYear();
+        };
 
-              {/* Plastic */}
-              <div>
-                <h3 className="text-base md:text-lg font-bold text-blue-800 mb-2 border-l-4 border-blue-600 pl-2">หมวดพลาสติก</h3>
-                <TableHeader unit="บาท/กก." />
-                <div className="border border-t-0 rounded-b-lg overflow-hidden">
-                  {prices.plastic.map((item, idx) => (
-                    <ItemRow key={idx} item={item} index={idx} />
-                  ))}
-                </div>
-              </div>
+        // --- 2. Data Definition ---
+        const priceData = [
+            {
+                category: "หมวดอลูมิเนียม",
+                unit: "บาท/กก.",
+                icon: "fa-layer-group",
+                items: [
+                    { name: "กระป๋องอลูมิเนียม", store: 50, pickup: 45 },
+                    { name: "ฉากสะอาด", store: 50, pickup: 40 },
+                    { name: "ฉากรวม", store: 45, pickup: 35 },
+                    { name: "หนารวม", store: 40, pickup: 37 },
+                    { name: "บางรวม", store: 37, pickup: 35 },
+                    { name: "แผ่นเพลท", store: 55, pickup: 40 },
+                    { name: "กระทะดำ/ผัด", store: 30, pickup: 20 },
+                    { name: "ล้อแมกซ์(แกะสะอาด)", store: 50, pickup: 45 },
+                    { name: "ล้อแมกซ์(โครเมี่ยม)", store: 45, pickup: 40 },
+                    { name: "สายไฟ(ปอกเปลือกสวย)", store: 45, pickup: 40 },
+                ]
+            },
+            {
+                category: "หมวดพลาสติก",
+                unit: "บาท/กก.",
+                icon: "fa-bottle-water",
+                items: [
+                    { name: "PET รวม (ไม่แกะฉลาก)", store: 6, pickup: 5 },
+                    { name: "PET ใส (แกะฉลาก)", store: 7, pickup: 6 },
+                    { name: "ฟ้า (แกะฉลาก)", store: 6, pickup: 5 },
+                    { name: "HDPE (2) / ใส", store: 4, pickup: 3 },
+                    { name: "HDPE (2)", store: 4, pickup: 3 },
+                    { name: "PP สกรีน (5)", store: 2, pickup: 1 },
+                    { name: "ขวดสกรีน", store: 1, pickup: 0.5 },
+                    { name: "ขวดน้ำมันพืช", store: 1, pickup: 0.5 },
+                ]
+            },
+            {
+                category: "หมวดเศษกระดาษ",
+                unit: "บาท/กก.",
+                icon: "fa-box-open",
+                items: [
+                    { name: "กระดาษลัง(ติดสี-1)", store: 3, pickup: 2.5 },
+                    { name: "กระดาษจับจั๊ว", store: 1, pickup: 0.5 },
+                    { name: "กระดาษขาวดำ", store: 5, pickup: 4.5 },
+                ]
+            },
+            {
+                category: "หมวดน้ำมันพืช",
+                unit: "บาท/กก.",
+                icon: "fa-droplet",
+                items: [
+                    { name: "น้ำมันพืชเก่าใช้แล้ว", store: 20, pickup: 15 },
+                ]
+            },
+            {
+                category: "หมวดขวดสุราพร้อมลัง",
+                unit: "บาท/ลัง", // Special unit
+                icon: "fa-wine-bottle",
+                items: [
+                    { name: "สิงห์ ใหญ่ 620 ml.", store: 7, pickup: 6 },
+                    { name: "สิงห์ เล็ก 320 ml.", store: 7, pickup: 6 },
+                    { name: "ลีโอ ใหญ่ 620 ml.", store: 7, pickup: 6 },
+                    { name: "ลีโอ เล็ก 320 ml.", store: 7, pickup: 6 },
+                    { name: "ช้าง ใหญ่ 620 ml.", store: 11, pickup: 10 },
+                    { name: "ช้าง เล็ก 320 ml.", store: 12, pickup: 11 },
+                    { name: "ไฮนาเก้น ใหญ่ 620 ml.", store: 11, pickup: 10 },
+                    { name: "ไฮนาเก้น เล็ก 330 ml.", store: 12, pickup: 11 },
+                    { name: "เฟเดอร์บรอย ใหญ่ 640 ml.", store: 12, pickup: 10 },
+                    { name: "เฟเดอร์บรอย เล็ก 330 ml.", store: 8, pickup: 7 },
+                    { name: "นิยมไทย ใหญ่ 625 ml.", store: 8, pickup: 7 },
+                    { name: "นิยมไทย เล็ก 330 ml.", store: 8, pickup: 7 },
+                    { name: "อาชา ใหญ่ 630 ml.", store: 8, pickup: 7 },
+                    { name: "เหล้าขาว (รวงข้าว 625 ml.)", store: 11, pickup: 10 },
+                    { name: "เหล้าขาว (รวงข้าว 330 ml.)", store: 11, pickup: 10 },
+                    { name: "เหล้าขาว (ขวดเรียบ 625 ml.)", store: 12, pickup: 10 },
+                ]
+            },
+            {
+                category: "หมวดเศษแก้ว",
+                unit: "บาท/กก.",
+                icon: "fa-wine-glass-empty",
+                items: [
+                    { name: "เศษแก้ว", store: 1, pickup: 0.5 },
+                    { name: "เศษแก้วสีขาว", store: 1, pickup: 0.5 },
+                    { name: "เศษแก้วสีชา", store: 1, pickup: 0.5 },
+                    { name: "เศษแก้วสีเขียวรวม", store: 1, pickup: 0.5 },
+                ]
+            }
+        ];
 
-               {/* Oil */}
-               <div>
-                <h3 className="text-base md:text-lg font-bold text-orange-800 mb-2 border-l-4 border-orange-600 pl-2">หมวดน้ำมันพืช</h3>
-                <TableHeader unit="บาท/กก." />
-                <div className="border border-t-0 rounded-b-lg overflow-hidden">
-                  {prices.oil.map((item, idx) => (
-                    <ItemRow key={idx} item={item} index={idx} />
-                  ))}
-                </div>
-              </div>
-            </div>
+        // --- 3. Render Logic ---
+        const renderPrices = () => {
+            const container = document.getElementById('priceContainer');
+            
+            priceData.forEach((cat, index) => {
+                // Create Category Section
+                const section = document.createElement('div');
+                section.className = "bg-white rounded-xl shadow-md overflow-hidden price-card";
+                
+                // Header
+                const header = document.createElement('div');
+                header.className = "category-header px-4 py-2 flex justify-between items-center text-white";
+                header.innerHTML = `
+                    <h3 class="font-bold text-lg"><i class="fa-solid ${cat.icon} mr-2 opacity-80"></i>${cat.category}</h3>
+                    <span class="text-xs bg-white/20 px-2 py-1 rounded text-white/90">หน่วย: ${cat.unit}</span>
+                `;
+                
+                // Table
+                const tableContainer = document.createElement('div');
+                tableContainer.className = "p-0";
+                
+                const table = document.createElement('table');
+                table.className = "w-full text-sm";
+                
+                // Table Header
+                table.innerHTML = `
+                    <thead>
+                        <tr class="bg-gray-50 border-b">
+                            <th class="text-left py-2 px-4 font-medium text-gray-600">รายการ</th>
+                            <th class="text-right py-2 px-2 font-medium text-green-700 w-20">หน้าร้าน</th>
+                            <th class="text-right py-2 px-4 font-medium text-blue-700 w-20">จัดเก็บ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                    </tbody>
+                `;
+                
+                const tbody = table.querySelector('tbody');
+                
+                // Items
+                cat.items.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50";
+                    tr.innerHTML = `
+                        <td class="py-2.5 px-4 text-gray-800">${item.name}</td>
+                        <td class="py-2.5 px-2 text-right font-bold text-green-600">${item.store}</td>
+                        <td class="py-2.5 px-4 text-right font-semibold text-blue-500">${item.pickup}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
 
-            {/* Column 2 */}
-            <div className="space-y-6">
-               {/* Bottles (Crates) */}
-               <div>
-                <h3 className="text-base md:text-lg font-bold text-amber-800 mb-2 border-l-4 border-amber-600 pl-2">หมวดขวดสุราพร้อมลัง</h3>
-                <TableHeader unit="บาท/ลัง" />
-                <div className="border border-t-0 rounded-b-lg overflow-hidden">
-                  {prices.bottles.map((item, idx) => (
-                    <ItemRow key={idx} item={item} index={idx} />
-                  ))}
-                </div>
-              </div>
+                tableContainer.appendChild(table);
+                section.appendChild(header);
+                section.appendChild(tableContainer);
+                container.appendChild(section);
+            });
+        };
 
-              {/* Paper */}
-              <div>
-                <h3 className="text-base md:text-lg font-bold text-amber-900 mb-2 border-l-4 border-amber-900 pl-2">หมวดเศษกระดาษ</h3>
-                <TableHeader unit="บาท/กก." />
-                <div className="border border-t-0 rounded-b-lg overflow-hidden">
-                  {prices.paper.map((item, idx) => (
-                    <ItemRow key={idx} item={item} index={idx} />
-                  ))}
-                </div>
-              </div>
+        // --- 4. Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            setDate();
+            renderPrices();
+        });
 
-              {/* Glass */}
-              <div>
-                <h3 className="text-base md:text-lg font-bold text-emerald-800 mb-2 border-l-4 border-emerald-600 pl-2">หมวดเศษแก้ว</h3>
-                <TableHeader unit="บาท/กก." />
-                <div className="border border-t-0 rounded-b-lg overflow-hidden">
-                  {prices.glass.map((item, idx) => (
-                    <ItemRow key={idx} item={item} index={idx} />
-                  ))}
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-        {/* Footer Notes */}
-        <div className="bg-gray-50 p-6 border-t border-gray-200 text-xs text-gray-600 print:text-black">
-          <div className="max-w-3xl mx-auto space-y-1">
-            <p className="flex items-start gap-2">
-              <span className="text-red-500 font-bold">*</span>
-              ราคาอาจมีการเปลี่ยนแปลงขึ้นลงระหว่างวัน โดยไม่ต้องแจ้งให้ทราบล่วงหน้า โปรดสอบถามราคาก่อนขายสินค้าทุกครั้ง
-            </p>
-            <p className="flex items-start gap-2">
-              <span className="text-red-500 font-bold">*</span>
-              ราคานี้ต้องมีจำนวนกระป๋องอลูมิเนียมขั้นต่ำ 100 กก. ขึ้นไป ถ้าไม่ถึง -5 บาท
-            </p>
-            <p className="flex items-start gap-2">
-              <span className="text-green-600 font-bold">*</span>
-              ร้านเปิดให้บริการวันจันทร์-เสาร์ หยุดทุกวันอาทิตย์
-            </p>
-          </div>
-          <div className="mt-4 text-center text-gray-400 text-[10px]">
-            Generated by Baanpong Recycle System for LINE LIFF
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+    </script>
+</body>
+</html>
